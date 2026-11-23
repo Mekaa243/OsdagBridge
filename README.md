@@ -1,175 +1,32 @@
-# OsdagBridge
+# OsdagBridge Testing & Issue Reporting - Short-Span Steel Girder Module
 
-OsdagBridge is a modular, shared-core software plugin for the analysis and design of steel bridges within the Osdag ecosystem.  
-It supports desktop (PySide6), web (Django + React), and CLI interfaces through a unified Python core.
+Test harness, plan, log and report template for the OsdagBridge testing task.
 
-The system currently supports:
-- Plate Girder Bridges  
- 
+> **Honesty note:** this scaffold contains the *plan* and tooling only. No test results, bugs, screenshots or video exist until you run the software. Do not submit placeholders as findings.
 
-Additional bridge types can be added through the plugin architecture.
+## Layout
+| Path | Purpose |
+|---|---|
+| `docs/TEST_PLAN.md` | 42 planned cases (A basic, B additional, C custom materials, D multi-run, E outputs, F negative) + procedure + pass/fail rules |
+| `test_log.xlsx` | Test-case log with status dropdowns, Summary (formulas), Multi-Run, Dict Comparison, Issues sheets |
+| `scripts/compare_dicts.py` | `ui-vs-input`, `output-vs-report`, `run-diff` comparisons (tolerance-aware, CSV export) |
+| `scripts/build_test_matrix.py` | Regenerates plan + log; edit the `TC` table, then re-run |
+| `scripts/make_zip.py` | Builds the submission ZIP |
+| `report/main.tex` | LaTeX report skeleton (Overleaf-ready); search for `TODO` |
+| `issues/` | GitHub issue template and duplicate-check log |
+| `video/STORYBOARD.md` | Screencast shot list |
+| `test_cases_osi/`, `evidence/` | Put your `.osi` files, screenshots, tracebacks, dictionaries here |
 
----
-
-## Key Features
-
-### Shared Core Architecture
-All numerical logic and I/O are implemented once in `osdagbridge.core`.  
-The desktop GUI, web app, and CLI all reuse the same core for consistent behavior.
-
-### Modular Bridge-Type System
-Each bridge type includes:
-- DTO (input model schema)
-- Initial sizing routines
-- Structural analysis configuration
-- Design and code-check modules
-- CAD geometry generation
-- Report generation utilities
-
-### Reusable Bridge Components
-Common structural elements are defined in `bridge_components/`:
-- Girders  
-- Decks  
-- Crash barriers  
-- Pedestals  
-- Piers  
-- Foundations  
-- Piles and pile caps  
-
-Components are shared across multiple bridge types.
-
-### Multi-Solver Analysis Support
-Multiple analysis backends are supported:
-- Native lightweight FEM solver  
-- OpenSeesPy  
-- OspGrillage  
-
-Solvers are switchable at runtime via adapters.
-
-### Integrated Indian Standards
-Included under `core/utils/codes/`:
-- IRC:6–2017  
-- IRC:22–2015  
-- IRC:24–2010  
-
-These modules provide load models, combinations, material factors, and code checks.
-
----
-
-## Project Structure
-
-```
-OsdagBridge/
-├── docs/
-├── examples/
-├── tests/
-└── src/
-    └── osdagbridge/
-        ├── core/              # Analysis, design, IO, solvers, codes
-        ├── bridge_types/      # Plate girder, box girder, truss
-        ├── bridge_components/ # Reusable components
-        ├── cli/               # Command-line interface
-        ├── desktop/           # PySide6 GUI
-        └── web/               # Django + React web stack
-```
-
----
-
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/osdag-admin/OsdagBridge.git
-cd OsdagBridge
-```
-
-Install in editable mode:
-
-```bash
-pip install -e .
-```
-
----
-
-## Usage
-
-### Command-Line Interface
-
-Run an analysis:
-
-```bash
-osdagbridge analyze project.yaml --solver native
-```
-
-Generate a report:
-
-```bash
-osdagbridge report project.yaml report.pdf
-```
-
-### Desktop Application
-
-```bash
-python -m osdagbridge.desktop
-```
-
-### Web Application
-
-Backend:
-
-```bash
-python src/osdagbridge/web/backend/manage.py runserver
-```
-
-Frontend:
-
-```bash
-cd src/osdagbridge/web/frontend
-npm install
-npm start
-```
-
----
-
-## Testing
-
-Run the complete test suite:
-
-```bash
-pytest -q
-```
-
-Continuous integration runs automatically through GitHub Actions (`.github/workflows/ci.yml`).
-
----
-
-## Development Guidelines
-
-### Key Code Locations
-- Core logic: `src/osdagbridge/core/`
-- Codes & standards: `src/osdagbridge/core/utils/codes/`
-- Bridge types: `src/osdagbridge/bridge_types/`
-- Components: `src/osdagbridge/bridge_components/`
-- CLI: `src/osdagbridge/cli/`
-- Desktop GUI: `src/osdagbridge/desktop/`
-- Web backend/frontend: `src/osdagbridge/web/`
-
-### Contribution Workflow
-1. Fork the repository  
-2. Create a feature branch  
-3. Ensure all tests pass (`pytest`)  
-4. Submit a pull request
-
----
-
-## Acknowledgements
-
-OsdagBridge is part of the Osdag project, promoting open-source tools for steel design education, research, and practice.
-
----
-
-## License
-
-This project is licensed under the MIT License.  
-See the `LICENSE` file for full details.
+## Workflow
+1. Do the setup from the task brief (fork, clone, `conda env create`, launch).
+2. **Adapt parameter names/ranges** in `scripts/build_test_matrix.py` to the real UI, re-run it.
+3. For each case: enter inputs -> save `.osi` -> dump input dict -> design -> dump output dict -> screenshots.
+4. Compare: 
+   ```bash
+   python scripts/compare_dicts.py ui-vs-input ui_values.json evidence/dictionaries/TC-A01_in.json --csv evidence/logs/TC-A01_in.csv
+   python scripts/compare_dicts.py output-vs-report TC-A01_out.json report_values.json
+   python scripts/compare_dicts.py run-diff run1_out.json run2_out.json
+   ```
+   `ui_values.json` = flat `{"Label": value}` you type by hand from the UI. If key names differ, pass `--map mapping.json`. `.osi` files are read via PyYAML when installed.
+5. Log results in `test_log.xlsx`; for failures, search existing GitHub issues, then file using `issues/ISSUE_TEMPLATE.md` (or comment on the existing issue).
+6. Fill `report/main.tex`, compile on Overleaf, record the video, tick `docs/SUBMISSION_CHECKLIST.md`, run `python scripts/make_zip.py`.
